@@ -2,3 +2,6 @@ venv/
 *.pyc
 __pycache__/
 .env
+
+# ignore data files
+data/raw_data.json
