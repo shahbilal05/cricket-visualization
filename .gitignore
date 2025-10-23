@@ -3,6 +3,5 @@ venv/
 __pycache__/
 .env
 
-# ignore data files
 data/raw_data.json
-data/processed_data.json
+data/processed_data.csv

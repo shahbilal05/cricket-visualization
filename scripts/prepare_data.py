@@ -48,8 +48,15 @@ df = df.with_columns([
     pl.col("deliveries").struct.field("bowler").alias("bowler"),
     pl.col("deliveries").struct.field("runs").struct.field("batter").alias("runs_batter"),
     pl.col("deliveries").struct.field("runs").struct.field("total").alias("runs_total"),
+    pl.col("deliveries").struct.field("runs").struct.field("extras").alias("runs_extras"), 
     pl.col("deliveries").struct.field("wickets").alias("wickets"),
 ]).drop("deliveries")
+
+# total runs as batter runs + extras  
+df = df.with_columns([
+    (pl.col("runs_batter") + pl.col("runs_extras")).alias("runs_total"),
+    (pl.col("over_number") + 1).alias("over_number")
+])
 
 # if wicket, get player_out
 df = df.with_columns([
@@ -58,6 +65,8 @@ df = df.with_columns([
       .otherwise(None)
       .alias("player_out")
 ])
+
+
 
 # get bowler who took the wicket if kind is bowled or lbw
 df = df.with_columns([
@@ -76,20 +85,21 @@ df = df.with_columns([
     (pl.col("runs_total") == 0).alias("is_dot_ball"),
 ])
 
+# ensure correct data types
+df = df.with_columns(pl.col("match_date").str.strptime(pl.Date, "%Y-%m-%d"))
+df = df.with_columns(pl.col("over_number").cast(pl.Int32))
+
 final_df = df.select([
     "match_id", "match_date", "city", "venue", "batting_team",
     "over_number", "batter", "bowler", "runs_batter", "runs_total",
-    "is_boundary", "is_dot_ball", "player_out"
+    "runs_extras", "is_boundary", "is_dot_ball", "player_out", "bowler_for_wicket" 
 ])
 
-final_df.write_json("data/processed_data.json")
+final_df = final_df.sort(["match_date", "match_id"])
 
-# indent JSON for readbility
-with open("data/processed_data.json", "r") as f:
-    data = json.load(f)
+# write to CSV
+output_path = Path("data/processed_data.csv")
+final_df.write_csv(output_path)
+# Processed 1,314,002 deliveries into CSV 
+print(f"Processed {len(final_df):,} deliveries into CSV saved at {output_path}")
 
-with open("data/processed_data.json", "w") as f:
-    json.dump(data, f, indent=4)
-
-# "Processed 1,314,002 deliveries"
-print(f"Processed {len(final_df):,} deliveries")
