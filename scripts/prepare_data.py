@@ -66,19 +66,6 @@ df = df.with_columns([
       .alias("player_out")
 ])
 
-
-
-# get bowler who took the wicket if kind is bowled or lbw
-df = df.with_columns([
-    pl.when(
-        (pl.col("wickets").list.len() > 0) &
-        (pl.col("wickets").list.first().struct.field("kind").is_in(["bowled", "lbw"]))
-    )
-    .then(pl.col("bowler"))
-    .otherwise(None)
-    .alias("bowler_for_wicket")
-])
-
 # add boundary (4 or 6 runs) and dot balls (0 runs)
 df = df.with_columns([
     pl.col("runs_batter").is_in([4, 6]).alias("is_boundary"),
@@ -92,7 +79,7 @@ df = df.with_columns(pl.col("over_number").cast(pl.Int32))
 final_df = df.select([
     "match_id", "match_date", "city", "venue", "batting_team",
     "over_number", "batter", "bowler", "runs_batter", "runs_total",
-    "runs_extras", "is_boundary", "is_dot_ball", "player_out", "bowler_for_wicket" 
+    "runs_extras", "is_boundary", "is_dot_ball", "player_out" 
 ])
 
 final_df = final_df.sort(["match_date", "match_id"])
@@ -100,6 +87,6 @@ final_df = final_df.sort(["match_date", "match_id"])
 # write to CSV
 output_path = Path("data/processed_data.csv")
 final_df.write_csv(output_path)
+
 # Processed 1,314,002 deliveries into CSV 
 print(f"Processed {len(final_df):,} deliveries into CSV saved at {output_path}")
-
