@@ -4,4 +4,4 @@ __pycache__/
 .env
 
 data/raw_data.json
-data/processed_data.csv
+data/*.csv

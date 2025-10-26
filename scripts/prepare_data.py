@@ -48,9 +48,35 @@ df = df.with_columns([
     pl.col("deliveries").struct.field("bowler").alias("bowler"),
     pl.col("deliveries").struct.field("runs").struct.field("batter").alias("runs_batter"),
     pl.col("deliveries").struct.field("runs").struct.field("total").alias("runs_total"),
-    pl.col("deliveries").struct.field("runs").struct.field("extras").alias("runs_extras"), 
+    pl.col("deliveries").struct.field("runs").struct.field("extras").alias("runs_extras"),
     pl.col("deliveries").struct.field("wickets").alias("wickets"),
+])
+
+# find extras type
+df = df.with_columns([
+    pl.when(pl.col("deliveries").struct.field("extras").is_not_null())
+      .then(
+          pl.when(pl.col("deliveries").struct.field("extras").struct.field("wides").is_not_null())
+            .then(pl.lit("wides"))
+          .when(pl.col("deliveries").struct.field("extras").struct.field("noballs").is_not_null())
+            .then(pl.lit("noballs"))
+          .when(pl.col("deliveries").struct.field("extras").struct.field("byes").is_not_null())
+            .then(pl.lit("byes"))
+          .when(pl.col("deliveries").struct.field("extras").struct.field("legbyes").is_not_null())
+            .then(pl.lit("legbyes"))
+          .otherwise(pl.lit("penalty"))
+      )
+      .otherwise(None)
+      .alias("extras_type"),
 ]).drop("deliveries")
+
+# legal deliveries (not wides or noballs)
+df = df.with_columns([
+    pl.when(pl.col("extras_type").is_null())
+      .then(pl.lit(True))
+      .otherwise(~pl.col("extras_type").is_in(["wides", "noballs"]))
+      .alias("is_legal_delivery")
+])
 
 # total runs as batter runs + extras  
 df = df.with_columns([
@@ -79,7 +105,7 @@ df = df.with_columns(pl.col("over_number").cast(pl.Int32))
 final_df = df.select([
     "match_id", "match_date", "city", "venue", "batting_team",
     "over_number", "batter", "bowler", "runs_batter", "runs_total",
-    "runs_extras", "is_boundary", "is_dot_ball", "player_out" 
+    "runs_extras", "is_boundary", "is_dot_ball", "is_legal_delivery", "player_out" 
 ])
 
 final_df = final_df.sort(["match_date", "match_id"])
