@@ -4,5 +4,6 @@ venv/
 __pycache__/
 .env
 
-data/raw_data.json
-data/*.csv
+data/cricket_ball_by_ball.parquet
+*.json
+*.jar
