@@ -111,8 +111,8 @@ quality_matchups = edges.join(
     bowler_stats.select(col("id").alias("dst"), col("wickets_taken")),
     "dst"
 ).filter(
-    (col("wickets_taken") >= 50) & # Quality bowler (lowered threshold)
-    (col("dominance_score") > 0.5) # Batter did well
+    (col("wickets_taken") >= 50) & # Quality bowler 
+    (col("dominance_score") > 0.5) # If batter did well
 ).orderBy(col("dominance_score").desc()).limit(100)
 
 # 1. Players with PageRank/Centrality

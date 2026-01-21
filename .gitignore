@@ -5,5 +5,9 @@ __pycache__/
 .env
 
 data/cricket_ball_by_ball.parquet
-*.json
+data/raw_data.json
+metrics.json
+asymmetric_matchups.json
+edges.json
+players.json
 *.jar
